@@ -1,16 +1,14 @@
 package com.jaya.currencyconverter.service;
 
-import com.jaya.currencyconverter.CurrencyConverterApplication;
 import com.jaya.currencyconverter.exception.AmountNotInformedException;
 import com.jaya.currencyconverter.exception.CurrencyNotFoundException;
 import com.jaya.currencyconverter.exception.CurrencyUninformedException;
+import com.jaya.currencyconverter.exception.TransactionsNotFoundException;
 import com.jaya.currencyconverter.integration.exchangerate.model.ExchangeRate;
 import com.jaya.currencyconverter.integration.exchangerate.service.ExchangeRateService;
 import com.jaya.currencyconverter.model.Transaction;
 import com.jaya.currencyconverter.repository.TransactionRepository;
 import com.jaya.currencyconverter.wrapper.TransactionWrapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -28,11 +26,14 @@ public class TransactionServiceImpl implements TransactionService {
     @Autowired
     private ExchangeRateService exchangeRateService;
 
-    private static Logger logger = LoggerFactory.getLogger(CurrencyConverterApplication.class);
-
     @Override
     public List<Transaction> findByUserId(Long userId) {
-        return repository.findByUserId(userId);
+        List<Transaction> results = repository.findByUserId(userId);
+
+        if(results == null || results.isEmpty())
+            throw new TransactionsNotFoundException();
+
+        return results;
     }
 
     @Override
@@ -54,9 +55,8 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     private void validateTransaction(TransactionWrapper transactionWp, ExchangeRate exchangeRate){
-        if(transactionWp.getAmount() == null || transactionWp.getAmount().compareTo(BigDecimal.ZERO) == 0) {
+        if(transactionWp.getAmount() == null || transactionWp.getAmount().compareTo(BigDecimal.ZERO) == 0)
             throw new AmountNotInformedException();
-        }
 
         if(transactionWp.getOriginCurrency() == null || transactionWp.getOriginCurrency().isEmpty())
             throw new CurrencyUninformedException("Origin currency not informed.");
@@ -69,9 +69,8 @@ public class TransactionServiceImpl implements TransactionService {
             throw new CurrencyNotFoundException("Source currency not found.");
 
         BigDecimal targetRate = exchangeRate.getRates().get(transactionWp.getTargetCurrency());
-        if(targetRate == null) {
+        if(targetRate == null)
             throw new CurrencyNotFoundException("Destination currency not found.");
-        }
     }
 
     private void calculate(Transaction transaction, TransactionWrapper transactionWp){
@@ -88,7 +87,6 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     private BigDecimal getRate(String currency, ExchangeRate exchangeRate){
-        BigDecimal rate = exchangeRate.getRates().get(currency);
-        return rate;
+        return exchangeRate.getRates().get(currency);
     }
 }

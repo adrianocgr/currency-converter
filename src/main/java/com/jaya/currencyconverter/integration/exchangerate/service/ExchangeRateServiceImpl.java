@@ -1,8 +1,5 @@
 package com.jaya.currencyconverter.integration.exchangerate.service;
 
-import com.jaya.currencyconverter.CurrencyConverterApplication;
-import com.jaya.currencyconverter.integration.exchangerate.exception.ExchangerateApiKeyNotInformedException;
-import com.jaya.currencyconverter.integration.exchangerate.exception.ExchangerateBaseNotInformedException;
 import com.jaya.currencyconverter.integration.exchangerate.exception.ExchangerateRequestException;
 import com.jaya.currencyconverter.integration.exchangerate.model.ExchangeRate;
 import org.slf4j.Logger;
@@ -23,9 +20,9 @@ import java.util.Map;
 @Service
 public class ExchangeRateServiceImpl implements ExchangeRateService {
 
-    private static final String url = "http://api.exchangeratesapi.io/latest?base={base}&access_key={key}";
+    private static final String URL = "http://api.exchangeratesapi.io/latest?base={base}&access_key={key}";
 
-    private static Logger logger = LoggerFactory.getLogger(CurrencyConverterApplication.class);
+    private static Logger logger = LoggerFactory.getLogger(ExchangeRateServiceImpl.class);
 
     @Value("${EXCHANGERATES_BASE}")
     private String base;
@@ -38,20 +35,13 @@ public class ExchangeRateServiceImpl implements ExchangeRateService {
 
     @Override
     public ExchangeRate get() {
-        validateEnvironmentVariables();
         ExchangeRate exchangeRate = getRates();
+        validateRequestResult(exchangeRate);
         return exchangeRate;
     }
 
-    private void validateEnvironmentVariables() {
-        if (base == null || base.isEmpty())
-            throw new ExchangerateBaseNotInformedException();
-        if (apiKey == null || apiKey.isEmpty())
-            throw new ExchangerateApiKeyNotInformedException();
-    }
-
     private void validateRequestResult(ExchangeRate exchangeRate) {
-        if (exchangeRate.getError() != null) {
+        if (exchangeRate != null && exchangeRate.getError() != null) {
             String message = exchangeRate.getError().getInfo();
             String code = exchangeRate.getError().getCode().toString();
             StringBuilder formattedMessage = new StringBuilder();
@@ -72,12 +62,13 @@ public class ExchangeRateServiceImpl implements ExchangeRateService {
             uriVariables.put("base", base);
             uriVariables.put("key", apiKey);
 
-            HttpEntity<ExchangeRate> entity = new HttpEntity<ExchangeRate>(headers);
-            ExchangeRate exchangeRate = restTemplate.exchange(url, HttpMethod.GET, entity, ExchangeRate.class, uriVariables).getBody();
-            validateRequestResult(exchangeRate);
-            return exchangeRate;
+            HttpEntity<ExchangeRate> entity = new HttpEntity<>(headers);
+            return restTemplate.exchange(URL, HttpMethod.GET, entity, ExchangeRate.class, uriVariables).getBody();
         } catch (Exception ex) {
-            logger.error("An error occurred while integrating with the ExchangeRate API, reason: " + ex.getMessage());
+            StringBuilder message = new StringBuilder();
+            message.append("An error occurred while integrating with the ExchangeRate API, reason: ");
+            message.append(ex.getMessage());
+            logger.error(message.toString());
             throw new ExchangerateRequestException("An error occurred while integrating with the ExchangeRate API");
         }
     }

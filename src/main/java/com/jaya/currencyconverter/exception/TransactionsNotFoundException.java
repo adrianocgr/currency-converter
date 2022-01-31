@@ -4,9 +4,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
 @ResponseStatus(HttpStatus.NOT_FOUND)
-public class CurrencyNotFoundException extends AbstractLoggerException {
-    public CurrencyNotFoundException(String message){
-        super(message);
+public class TransactionsNotFoundException extends AbstractLoggerException{
+    public TransactionsNotFoundException(){
+        super("Transactions not found.");
     }
 }
-

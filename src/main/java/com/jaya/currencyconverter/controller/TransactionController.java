@@ -1,5 +1,6 @@
 package com.jaya.currencyconverter.controller;
 
+import com.jaya.currencyconverter.exception.AmountNotInformedException;
 import com.jaya.currencyconverter.model.Transaction;
 import com.jaya.currencyconverter.service.TransactionService;
 import com.jaya.currencyconverter.wrapper.TransactionRequestWrapper;
@@ -24,17 +25,17 @@ public class TransactionController {
     private TransactionService transactionService;
 
     @PostMapping
-    public ResponseEntity convert(@PathVariable Long userId, @RequestBody TransactionRequestWrapper transactionReqWp){
-        TransactionWrapper transactionWp = TransactionWrapper.builder()
-                .originCurrency(transactionReqWp.getOriginCurrency())
-                .targetCurrency(transactionReqWp.getTargetCurrency())
-                .amount(transactionReqWp.getAmount())
-                .build();
-        return new ResponseEntity<Transaction>(transactionService.convert(userId, transactionWp), HttpStatus.OK);
+    public ResponseEntity<Transaction> convert(@PathVariable Long userId, @RequestBody TransactionRequestWrapper transactionReqWp) {
+            TransactionWrapper transactionWp = TransactionWrapper.builder()
+                    .originCurrency(transactionReqWp.getOriginCurrency())
+                    .targetCurrency(transactionReqWp.getTargetCurrency())
+                    .amount(transactionReqWp.getAmount())
+                    .build();
+            return new ResponseEntity<Transaction>(transactionService.convert(userId, transactionWp), HttpStatus.ACCEPTED);
     }
 
     @GetMapping
-    public ResponseEntity convert(@PathVariable Long userId){
+    public ResponseEntity<List<Transaction>> convert(@PathVariable Long userId) {
         return new ResponseEntity<List<Transaction>>(transactionService.findByUserId(userId), HttpStatus.OK);
     }
 }
